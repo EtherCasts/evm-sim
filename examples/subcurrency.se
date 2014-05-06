@@ -1,5 +1,5 @@
 init:
-    contract.storage[0xcd2a3d9f938e13cd947ec05abc7fe734df8dd826] = 1000000
+    contract.storage[msg.sender] = 1000000
 code:
     if msg.datasize == 1:
         addr = msg.data[0]

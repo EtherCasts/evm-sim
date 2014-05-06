@@ -43,6 +43,4 @@ class TestNamecoin(object):
 
     def test_init(self):
         """Fails due to https://github.com/ethereum/pyethereum/issues/87"""
-        from pprint import pprint
-        pprint(self.genesis.to_dict())
-        assert self.genesis.get_storage(self.contract).to_dict() == {'cd2a3d9f938e13cd947ec05abc7fe734df8dd826': 1000000}
+        assert self.genesis.get_storage_data(self.contract, 'cd2a3d9f938e13cd947ec05abc7fe734df8dd826') == 1000000
