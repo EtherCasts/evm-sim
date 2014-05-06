@@ -1,0 +1,2 @@
+-e git://github.com/ethereum/pyethereum.git#egg=pyethereum
+-e git://github.com/ethereum/serpent.git#egg=ethereum-serpent
