@@ -9,9 +9,10 @@ Test Net.
 
 ## Working Examples
 
-| Name            | Contract file                                     | Test                                       |
-| --------------- | --------------------------------------------------| ------------------------------------------ |
-| Namecoin        | [namecoin.se](examples/namecoin.se)               | [test\_namecoin.py](tests/test_namecoin.py)|
+| Name            | Contract file                                     | Test                                             |
+| --------------- | --------------------------------------------------| ------------------------------------------------ |
+| Namecoin        | [namecoin.se](examples/namecoin.se)               | [test\_namecoin.py](tests/test_namecoin.py)      |
+| Subcurrency     | [subcurrency.se](examples/subcurrency.se)         | [test\_subcurrency.py](tests/test_subcurrency.py)|
 
 ## Installation
 
