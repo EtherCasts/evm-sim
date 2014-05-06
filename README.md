@@ -13,6 +13,7 @@ Test Net.
 | --------------- | --------------------------------------------------| ------------------------------------------------ |
 | Namecoin        | [namecoin.se](examples/namecoin.se)               | [test\_namecoin.py](tests/test_namecoin.py)      |
 | Subcurrency     | [subcurrency.se](examples/subcurrency.se)         | [test\_subcurrency.py](tests/test_subcurrency.py)|
+| ReturnTen       | [returnten.se](examples/returnten.se)             | [test\_returnten.py](tests/test_returnten.py)    |
 
 ## Installation
 
