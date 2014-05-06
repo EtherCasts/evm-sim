@@ -1,46 +1,45 @@
-from pyethereum import transactions, blocks, processblock, utils
-import serpent
-
-# processblock.debug = 1
+from sim import Key, Simulator, load_serpent
 
 
-class TestNamecoin(object):
+class TestSubcurrency(object):
 
-    SECRET_KEY = 'cow'
-    STARTETH = 10**18
-    GASPRICE = 10**12
-    STARTGAS = 10000
-    SCRIPT = 'examples/subcurrency.se'
+    ALICE = Key('cow')
+    BOB = Key('cat')
+    CHARLIE = Key('car')
 
     @classmethod
     def setup_class(cls):
-        cls.key = utils.sha3(cls.SECRET_KEY)
-        cls.addr = utils.privtoaddr(cls.key)
-        cls.code = serpent.compile(open(cls.SCRIPT).read())
-
-    def load_contract(self, code, endowment=0):
-        _tx = transactions.contract(nonce=self.nonce, gasprice=self.GASPRICE, startgas=self.STARTGAS,
-                                    endowment=endowment, code=code).sign(self.key)
-        result, contract = processblock.apply_tx(self.genesis, _tx)
-        assert result
-
-        self.nonce += 1
-        return contract
+        cls.code = load_serpent('examples/subcurrency.se')
+        cls.sim = Simulator({cls.ALICE.address: 10**18,
+                             cls.BOB.address: 10**18})
 
     def setup_method(self, method):
-        self.genesis = blocks.genesis({self.addr: self.STARTETH})
-        self.nonce = 0
-        self.contract = self.load_contract(self.code)
+        self.sim.reset()
+        self.contract = self.sim.load_contract(self.ALICE, self.code)
 
-    def tx(self, to, value, data):
-        _tx = transactions.Transaction(nonce=self.nonce, gasprice=self.GASPRICE, startgas=self.STARTGAS,
-                                       to=to, value=value, data=serpent.encode_datalist(data)).sign(self.key)
-        result, ans = processblock.apply_tx(self.genesis, _tx)
-        assert result
+    def test_creation(self):
+        assert self.sim.get_storage_data(self.contract, self.ALICE.address) == 1000000
 
-        self.nonce += 1
-        return serpent.decode_datalist(ans)
+    def test_alice_to_bob(self):
+        ans = self.sim.tx(self.ALICE, self.contract, 0, [self.BOB.address, 1000])
+        assert ans == [1]
+        assert self.sim.get_storage_data(self.contract, self.ALICE.address) == 999000
+        assert self.sim.get_storage_data(self.contract, self.BOB.address) == 1000
 
-    def test_init(self):
-        """Fails due to https://github.com/ethereum/pyethereum/issues/87"""
-        assert self.genesis.get_storage_data(self.contract, 'cd2a3d9f938e13cd947ec05abc7fe734df8dd826') == 1000000
+    def test_bob_to_charlie_invalid(self):
+        ans = self.sim.tx(self.BOB, self.contract, 0, [self.CHARLIE.address, 1000])
+        assert ans == [0]
+        assert self.sim.get_storage_data(self.contract, self.ALICE.address) == 1000000
+        assert self.sim.get_storage_data(self.contract, self.BOB.address) == 0
+        assert self.sim.get_storage_data(self.contract, self.CHARLIE.address) == 0
+
+    def test_alice_to_bob_to_charlie_valid(self):
+        ans = self.sim.tx(self.ALICE, self.contract, 0, [self.BOB.address, 1000])
+        assert ans == [1]
+
+        ans = self.sim.tx(self.BOB, self.contract, 0, [self.CHARLIE.address, 250])
+        assert ans == [1]
+
+        assert self.sim.get_storage_data(self.contract, self.ALICE.address) == 999000
+        assert self.sim.get_storage_data(self.contract, self.BOB.address) == 750
+        assert self.sim.get_storage_data(self.contract, self.CHARLIE.address) == 250
