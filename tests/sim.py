@@ -30,8 +30,8 @@ class Simulator(object):
         self.genesis = blocks.genesis(self.founders)
         self.nonce = Counter()
 
-    def load_contract(self, frm, code, endowment=0):
-        _tx = transactions.contract(nonce=self.nonce[frm], gasprice=self.GASPRICE, startgas=self.STARTGAS,
+    def load_contract(self, frm, code, endowment=0, gas=STARTGAS):
+        _tx = transactions.contract(nonce=self.nonce[frm], gasprice=self.GASPRICE, startgas=gas,
                                     endowment=endowment, code=code).sign(frm.key)
         result, contract = processblock.apply_tx(self.genesis, _tx)
         assert result
