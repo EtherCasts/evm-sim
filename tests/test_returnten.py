@@ -1,4 +1,4 @@
-from sim import Key, Simulator, load_serpent
+from sim import Key, Simulator
 
 
 class TestReturnTen(object):
