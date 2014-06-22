@@ -12,12 +12,20 @@ def compile_serpent(filename):
     try:
         output = subprocess.check_output(["serpent", "compile", filename], stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        raise SerpentException(e.output)
+        raise CompilationException(e.output)
+
+    return output.strip().decode('hex')
+
+def compile_lll(filename):
+    try:
+        output = subprocess.check_output(["lllc", filename], stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        raise CompilationException(e.output)
 
     return output.strip().decode('hex')
 
 
-class SerpentException(Exception):
+class CompilationException(Exception):
     pass
 
 

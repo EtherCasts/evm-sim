@@ -22,7 +22,8 @@ Install the required Python libraries with `pip`, it is suggested to do this wit
 
 ` pip install -r requirements.txt`
 
-The `serpent` compiler binary needs to be installed and available on the PATH; install it from https://github.com/ethereum/serpent/tree/cpp
+The `serpent` compiler binary needs to be installed and available on the PATH; install it from https://github.com/ethereum/serpent/
+To use LLL, the `lllc` compiler binary needs to be installed and available on the PATH; install it from https://github.com/ethereum/cpp-ethereum/
 
 ## Usage
 
