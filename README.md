@@ -5,7 +5,7 @@
 Simulator of the Ethereum Virtual Machine. The intention of this simulator is
 to help contract coders develop and test their work using test driven best
 practises and in full isolation, without the need to connect to the Ethereum
-Test Net.
+Test Net. It currently support the Serpent, LLL and Mutan languages.
 
 ## Working Examples
 
