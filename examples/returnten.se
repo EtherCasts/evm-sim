@@ -1,2 +1,2 @@
-x = create(tx.gas - 100, 0, import(mul2.se))
+x = create("examples/mul2.se")
 return(msg(tx.gas-100,x,0,[5],1))
