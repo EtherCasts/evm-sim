@@ -1,4 +1,5 @@
 from collections import Counter
+import re
 import subprocess
 
 from pyethereum import transactions, blocks, processblock, utils
@@ -23,6 +24,18 @@ def compile_lll(filename):
         raise CompilationException(e.output)
 
     return output.strip().decode('hex')
+
+def compile_mutan(filename):
+    try:
+        output = subprocess.check_output(["mutan", filename], stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        raise CompilationException(e.output)
+
+    match = re.search("hex: 0x([0-9a-f]+)", output)
+    if not match:
+        raise CompilationException(output)
+
+    return match.group(1).decode('hex')
 
 
 class CompilationException(Exception):
