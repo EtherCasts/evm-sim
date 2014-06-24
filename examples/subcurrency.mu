@@ -1,4 +1,4 @@
-this.store[this.origin()] = 10**20
+this.store[this.origin()] = 1000000
 
 exit compile {
     var to = this.data[0]
