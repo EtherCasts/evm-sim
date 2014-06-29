@@ -26,6 +26,9 @@ class TestMutuala(object):
     def get_account_balance(self, address):
         return self.sim.get_storage_data(self.contract, coerce_to_bytes(int(address, 16) + 2**161))
 
+    def get_account_timestamp(self, address):
+        return self.sim.get_storage_data(self.contract, coerce_to_bytes(int(address, 16) + 2**161 + 1))
+
     def get_account_tax_credits(self, address):
         return self.sim.get_storage_data(self.contract, coerce_to_bytes(int(address, 16) + 2**161 + 2))
 
@@ -37,9 +40,9 @@ class TestMutuala(object):
         return accounts
 
     def test_creation(self):
+        assert self.get_account_list() == [self.ALICE.address]
         assert self.get_account_balance(self.ALICE.address) == 10**12
-        assert self.sim.get_storage_data(self.contract, coerce_to_bytes(2**160-1)) == 1
-        assert self.sim.get_storage_data(self.contract, coerce_to_bytes(2**160)) == int(self.ALICE.address, 16)
+        assert self.get_account_timestamp(self.ALICE.address) == 1388534400
 
     def test_alice_balance(self):
         ans = self.sim.tx(self.ALICE, self.contract, 0, ["balance", self.ALICE.address])
@@ -53,6 +56,7 @@ class TestMutuala(object):
 
         # new account gets registered
         assert self.get_account_list() == [self.ALICE.address, self.BOB.address]
+        assert self.get_account_timestamp(self.BOB.address) == 1388534400
 
         # payment tax added to commons account and tax credits
         assert self.get_commons_balance() == 50
@@ -89,3 +93,12 @@ class TestMutuala(object):
         assert self.get_commons_balance() == 62
 
         assert self.get_account_list() == [self.ALICE.address, self.BOB.address, self.CHARLIE.address]
+
+    def test_alice_tick(self):
+        self.sim.genesis.timestamp += 30 * 86400
+        ans = self.sim.tx(self.ALICE, self.contract, 0, ["tick"])
+        assert ans == [1]
+        assert self.get_account_balance(self.ALICE.address) == 995893223830
+        assert self.get_account_timestamp(self.ALICE.address) == self.sim.genesis.timestamp
+        assert self.get_account_tax_credits(self.ALICE.address) == 4106776170
+        assert self.get_commons_balance() == 4106776170
