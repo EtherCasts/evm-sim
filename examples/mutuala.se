@@ -1,0 +1,97 @@
+# mutuala - subcurrency
+
+# We want to issue a currency that reduces in value as you store it through negative interest.  That negative interest would be stored in a commons account.  It's like the p2p version of a capital tax
+
+# TODO how to handle interest
+# TODO what should be the tax percentage?
+
+# the same things goes for transactions - you pay as you use the currency.  However, the more you pay, the more you get to say about what the tax is used for
+
+# TODO what should be the tax percentage?
+
+# each participant can propose a recipient for a payout to be made out of the commons account, others can vote on it by awarding it tax_credits.
+
+# TODO what should be the percentage for a proposal to pass?
+
+
+shared:
+    COMMONS = 42
+    ADMIN = 666
+    CAPITAL_TAX = 20 # 5%
+    PAYMENT_TAX = 20 # 5%
+    MAJORITY_PCT = 67
+
+    ACCOUNT_LIST_OFFSET = 2^160
+    ACCOUNT_MAP_OFFSET = 2^161
+    PROPOSAL_OFFSET = 2^162
+
+init:
+    contract.storage[ADMIN] = msg.sender
+    contract.storage[ACCOUNT_LIST_OFFSET - 1] = 1
+    contract.storage[ACCOUNT_LIST_OFFSET] = msg.sender
+    contract.storage[ACCOUNT_MAP_OFFSET + msg.sender] = 10^12
+
+# contract.storage[COMMONS] = balance commons
+
+# contract.storage[ACCOUNT_LIST_OFFSET - 1] = number of accounts
+# contract.storage[ACCOUNT_LIST_OFFSET + n] = account n
+
+# contract.storage[PROPOSAL_OFFSET - 1] contains the number of proposals
+# contract.storage[PROPOSAL_OFFSET + n] = proposal n
+
+# per account
+
+# contract.storage[ACCOUNT_MAP_OFFSET + account] = balance
+# contract.storage[ACCOUNT_MAP_OFFSET + account+1] = timestamp_last_transaction
+# contract.storage[ACCOUNT_MAP_OFFSET + account+2] = tax_credits
+
+# per proposal
+
+# contract.storage[proposal] = total_vote_credits
+# contract.storage[proposal-1] = recipient
+# contract.storage[proposal-2] = amount
+# contract.storage[proposal-3] = expiration
+#
+# contract.storage[proposal+1] = voter
+# contract.storage[proposal+2] = vote_amount
+#
+# TODO should have expiration timestamp, after which the tax_credits are refunded
+# TODO verify 'account' input to be < 2**160
+
+code:
+    if msg.data[0] == "suicide" and msg.sender == contract.storage[ADMIN]:
+        suicide(msg.sender)
+
+    elif msg.data[0] == "balance":
+        addr = msg.data[1]
+        return(contract.storage[ACCOUNT_MAP_OFFSET + addr])
+
+    elif msg.data[0] == "pay":
+        from = msg.sender
+        fromvalue = contract.storage[ACCOUNT_MAP_OFFSET + from]
+        to = msg.data[1]
+        if to == 0 or to >= 2^160:
+            return([0, "invalid address"], 2)
+        value = msg.data[2]
+        if fromvalue >= value:
+            contract.storage[ACCOUNT_MAP_OFFSET + from] = fromvalue - value
+            contract.storage[ACCOUNT_MAP_OFFSET + to] = contract.storage[ACCOUNT_MAP_OFFSET + to] + value
+            # TODO tax
+
+            # check timestamp field to see if target account exists
+            if contract.storage[ACCOUNT_MAP_OFFSET + to + 1] == 0:
+                # register new account
+                nr_accounts = contract.storage[ACCOUNT_LIST_OFFSET - 1]
+                contract.storage[ACCOUNT_LIST_OFFSET + nr_accounts] = to
+                contract.storage[ACCOUNT_LIST_OFFSET - 1] += 1
+                contract.storage[ACCOUNT_MAP_OFFSET + to + 1] = block.timestamp
+
+            return(1)
+        else:
+            return([0, "insufficient balance"], 2)
+
+    else:
+        return([0, "unknown command"], 2)
+
+
+
