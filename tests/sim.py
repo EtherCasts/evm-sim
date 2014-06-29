@@ -60,6 +60,7 @@ class Simulator(object):
 
     def reset(self):
         self.genesis = blocks.genesis(self.founders)
+        self.genesis.timestamp = 1388534400  # 2014-01-01
         self.nonce = Counter()
 
     def load_contract(self, frm, code, endowment=0, gas=STARTGAS):
