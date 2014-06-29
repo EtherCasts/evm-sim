@@ -73,10 +73,14 @@ code:
         if to == 0 or to >= 2^160:
             return([0, "invalid address"], 2)
         value = msg.data[2]
-        if fromvalue >= value:
-            contract.storage[ACCOUNT_MAP_OFFSET + from] = fromvalue - value
-            contract.storage[ACCOUNT_MAP_OFFSET + to] = contract.storage[ACCOUNT_MAP_OFFSET + to] + value
-            # TODO tax
+        tax = value / PAYMENT_TAX
+
+        if fromvalue >= value + tax:
+            contract.storage[ACCOUNT_MAP_OFFSET + from] = fromvalue - (value + tax)
+            contract.storage[ACCOUNT_MAP_OFFSET + to] += value
+            # tax
+            contract.storage[COMMONS] += tax
+            contract.storage[ACCOUNT_MAP_OFFSET + from + 2] += tax
 
             # check timestamp field to see if target account exists
             if contract.storage[ACCOUNT_MAP_OFFSET + to + 1] == 0:
