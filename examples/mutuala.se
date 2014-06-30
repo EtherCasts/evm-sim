@@ -2,28 +2,20 @@
 
 # We want to issue a currency that reduces in value as you store it through negative interest.  That negative interest would be stored in a commons account.  It's like the p2p version of a capital tax
 
-# TODO how to handle interest
-# TODO what should be the tax percentage?
-
 # the same things goes for transactions - you pay as you use the currency.  However, the more you pay, the more you get to say about what the tax is used for
 
-# TODO what should be the tax percentage?
-
 # each participant can propose a recipient for a payout to be made out of the commons account, others can vote on it by awarding it tax_credits.
-
-# TODO what should be the percentage for a proposal to pass?
-
 
 shared:
     COMMONS = 42
     ADMIN = 666
     CAPITAL_TAX_PER_DAY = 7305 # 5% per year
     PAYMENT_TAX = 20 # 5%
-    MAJORITY_PCT = 67
 
     ACCOUNT_LIST_OFFSET = 2^160
     ACCOUNT_MAP_OFFSET = 2^161
-    PROPOSAL_OFFSET = 2^162
+    PROPOSAL_LIST_OFFSET = 2^162
+    PROPOSAL_MAP_OFFSET = 2^163
 
 init:
     contract.storage[ADMIN] = msg.sender
@@ -37,8 +29,8 @@ init:
 # contract.storage[ACCOUNT_LIST_OFFSET - 1] = number of accounts
 # contract.storage[ACCOUNT_LIST_OFFSET + n] = account n
 
-# contract.storage[PROPOSAL_OFFSET - 1] contains the number of proposals
-# contract.storage[PROPOSAL_OFFSET + n] = proposal n
+# contract.storage[PROPOSAL_LIST_OFFSET - 1] contains the number of proposals
+# contract.storage[PROPOSAL_LIST_OFFSET + n] = proposal n
 
 # per account
 
@@ -48,16 +40,11 @@ init:
 
 # per proposal
 
-# contract.storage[proposal] = total_vote_credits
-# contract.storage[proposal-1] = recipient
-# contract.storage[proposal-2] = amount
-# contract.storage[proposal-3] = expiration
-#
-# contract.storage[proposal+1] = voter
-# contract.storage[proposal+2] = vote_amount
+# contract.storage[PROPOSAL_MAP_OFFSET] = recipient
+# contract.storage[PROPOSAL_MAP_OFFSET+1] = amount
+# contract.storage[PROPOSAL_MAP_OFFSET+2] = total vote credits
 #
 # TODO should have expiration timestamp, after which the tax_credits are refunded
-# TODO verify 'account' input to be < 2**160
 
 code:
     if msg.data[0] == "suicide" and msg.sender == contract.storage[ADMIN]:
@@ -95,11 +82,47 @@ code:
         else:
             return([0, "insufficient balance"], 2)
 
+    elif msg.data[0] == "propose":
+        from = msg.sender
+        # check if sender has an account and has tax credits
+        if not contract.storage[ACCOUNT_MAP_OFFSET + from + 2]:
+            return([0, "sender has no tax credits"], 2)
+
+        proposal_id = sha3(msg.data[1])
+        # check if proposal doesn't already exist
+        # TODO range checking
+        if contract.storage[PROPOSAL_MAP_OFFSET + proposal_id]:
+            return([0, "proposal already exists"])
+
+        to = msg.data[2]
+        # check if recipient is a valid address and has an account (with timestamp)
+        if to == 0 or to >= 2^160:
+            return([0, "invalid address"], 2)
+        if not contract.storage[ACCOUNT_MAP_OFFSET + to + 1]:
+            return([0, "invalid to account"], 2)
+
+        value = msg.data[3]
+        # check if there is enough money in the commons account
+        if value > contract.storage[COMMONS]:
+            return([0, "not enough credits in commons"], 2)
+
+        # record proposal in list
+        nr_proposals = contract.storage[PROPOSAL_LIST_OFFSET - 1]
+        contract.storage[PROPOSAL_LIST_OFFSET + nr_proposals] = proposal_id
+        contract.storage[PROPOSAL_LIST_OFFSET - 1] += 1
+
+        # record proposal in map
+        contract.storage[PROPOSAL_MAP_OFFSET + proposal_id] = to
+        contract.storage[PROPOSAL_MAP_OFFSET + proposal_id + 1] = value
+        # TODO status / expiration
+
+        return(proposal_id)
+
     elif msg.data[0] == "tick":
         nr_accounts = contract.storage[ACCOUNT_LIST_OFFSET - 1]
         account_idx = 0
         tax_paid = 0
-        # process all accounts and see if they need processing
+        # process all accounts and see if they have to pay their daily capital tax
         while account_idx < nr_accounts:
             cur_account = contract.storage[ACCOUNT_LIST_OFFSET + account_idx]
             last_timestamp = contract.storage[ACCOUNT_MAP_OFFSET + cur_account + 1]
@@ -117,7 +140,7 @@ code:
                     contract.storage[COMMONS] += tax
                     tax_paid += 1
             account_idx += 1
-        return(tax_paid)
+        return(tax_paid) # how many accounts did we charge tax on
 
     else:
         return([0, "unknown command"], 2)
