@@ -18,7 +18,7 @@ class TestMutuala(object):
 
     def setup_method(self, method):
         self.sim.reset()
-        self.contract = self.sim.load_contract(self.ALICE, self.code)
+        self.contract = self.sim.load_contract(self.ALICE, self.code, gas=100000)
 
     def get_commons_balance(self):
         return self.sim.get_storage_data(self.contract, coerce_to_bytes(42))
@@ -143,7 +143,14 @@ class TestMutuala(object):
 
         assert self.get_commons_balance() == 4107274070
 
-    def test_alice_propose_grant_to_bob(self):
+    def test_hash(self):
+        proposal_id_bob = self.get_proposal_id("grant to bob")
+        assert proposal_id_bob == 82884732143192300288868108433691753839884641754571232824914642588078699974444
+
+        ans = self.sim.tx(self.ALICE, self.contract, 0, ["hash", "grant to bob"])
+        assert ans == [proposal_id_bob]
+
+    def test_alice_propose_grant_to_bob_and_alice(self):
         ans = self.sim.tx(self.ALICE, self.contract, 0, ["pay", self.BOB.address, 1000])
         assert ans == [1]
 
@@ -163,9 +170,14 @@ class TestMutuala(object):
         assert self.get_commons_balance() == 4106776220
 
         # Propose 5000 grant for Bob to be paid out of Commons
-        proposal_id = self.get_proposal_id("grant to bob")
+        proposal_id_bob = self.get_proposal_id("grant to bob")
+        print proposal_id_bob
+
+        ans = self.sim.tx(self.ALICE, self.contract, 0, ["hash", "grant to bob"])
+        assert ans == [proposal_id_bob]
+
         ans = self.sim.tx(self.ALICE, self.contract, 0, ["propose", "grant to bob", self.BOB.address, 5000])
-        assert ans == [proposal_id]
+        assert ans == [proposal_id_bob]
 
         assert self.get_account_balance(self.ALICE.address) == 995893222780
         assert self.get_account_timestamp(self.ALICE.address) == self.sim.genesis.timestamp
@@ -175,7 +187,23 @@ class TestMutuala(object):
         assert self.get_proposal_amount("grant to bob") == 5000
         assert self.get_proposal_votes("grant to bob") == 0
 
-        assert self.get_proposal_list() == [coerce_addr_to_hex(proposal_id)]
+        assert self.get_proposal_list() == [coerce_addr_to_hex(proposal_id_bob)]
+
+        # Make sure charlie's account exists
+        ans = self.sim.tx(self.BOB, self.contract, 0, ["pay", self.CHARLIE.address, 250])
+        assert ans == [1]
+
+        # Propose 1000 grant for Charlie to be paid out of Commons
+        proposal_id_charlie = self.get_proposal_id("grant to charlie")
+        ans = self.sim.tx(self.ALICE, self.contract, 0, ["propose", "grant to charlie", self.CHARLIE.address, 1000])
+        assert ans == [proposal_id_charlie]
+
+        assert self.get_proposal_recipient("grant to charlie") == self.CHARLIE.address
+        assert self.get_proposal_amount("grant to charlie") == 1000
+        assert self.get_proposal_votes("grant to charlie") == 0
+
+        assert self.get_proposal_list() == [coerce_addr_to_hex(proposal_id_bob), coerce_addr_to_hex(proposal_id_charlie)]
+
 
     def test_alice_propose_grant_to_nonexisting_account(self):
         ans = self.sim.tx(self.ALICE, self.contract, 0, ["pay", self.BOB.address, 1000])
@@ -196,3 +224,42 @@ class TestMutuala(object):
         ans = self.sim.tx(self.BOB, self.contract, 0, ["propose", "grant to alice", self.ALICE.address, 5000])
         assert ans[0] == 0
         assert coerce_to_bytes(ans[1]) == "sender has no tax credits"
+
+    def test_alice_propose_grant_to_bob_and_votes(self):
+        ans = self.sim.tx(self.ALICE, self.contract, 0, ["pay", self.BOB.address, 1000])
+        assert ans == [1]
+
+        self.sim.genesis.timestamp += 30 * 86400
+        ans = self.sim.tx(self.ALICE, self.contract, 0, ["tick"])
+        assert ans == [1]
+
+        assert self.get_commons_balance() == 4106776220
+
+        # Propose 5000 grant for Bob to be paid out of Commons
+        proposal_id_bob = self.get_proposal_id("grant to bob")
+        ans = self.sim.tx(self.ALICE, self.contract, 0, ["propose", "grant to bob", self.BOB.address, 5000])
+        assert ans == [proposal_id_bob]
+
+        # Vote on own proposal, with 1/3th of total credits
+        ans = self.sim.tx(self.ALICE, self.contract, 0, ["vote", "grant to bob", 1368925406])
+        assert ans == [proposal_id_bob]
+
+        assert self.get_account_tax_credits(self.ALICE.address) == 2737850814
+        assert self.get_proposal_votes("grant to bob") == 1368925406
+
+        # 2/3 majority not yet reached
+        assert self.get_commons_balance() == 4106776220
+        assert self.get_account_balance(self.BOB.address) == 1000
+
+        # Vote again on own proposal, with another 1/3th of credits plus 1
+        ans = self.sim.tx(self.ALICE, self.contract, 0, ["vote", "grant to bob", 1368925407])
+        assert ans == [1]
+
+        # 2/3 majority reached and bob paid
+        assert self.get_commons_balance() == 4106771220
+        assert self.get_account_balance(self.BOB.address) == 6000
+
+        # proposal reset
+        assert self.get_proposal_recipient("grant to bob") == '0000000000000000000000000000000000000000'
+        assert self.get_proposal_amount("grant to bob") == 0
+        assert self.get_proposal_votes("grant to bob") == 0
