@@ -1,10 +1,18 @@
 # mutuala - subcurrency
 
-# We want to issue a currency that reduces in value as you store it through negative interest.  That negative interest would be stored in a commons account.  It's like the p2p version of a capital tax
+# We want to issue a currency that reduces in value as you store it through negative interest.
+# That negative interest would be stored in a commons account.  It's like the p2p version of a
+# capital tax
 
-# the same things goes for transactions - you pay as you use the currency.  However, the more you pay, the more you get to say about what the tax is used for
+# the same things goes for transactions - you pay as you use the currency.  However, the more
+# you pay, the more you get to say about what the tax is used for
 
-# each participant can propose a recipient for a payout to be made out of the commons account, others can vote on it by awarding it tax_credits.
+# each participant can propose a recipient for a payout to be made out of the commons account,
+# others can vote on it by awarding it tax_credits.
+
+# TODO should proposal have expiration timestamp?, after which the tax_credits are refunded
+# TODO multiple proposals can take more credits that available in the Commons, how to handle this
+# TODO how to handle lost accounts, after which no longer possible to get 2/3 majority
 
 shared:
     COMMONS = 42
@@ -32,21 +40,15 @@ init:
 # contract.storage[PROPOSAL_LIST_OFFSET - 1] contains the number of proposals
 # contract.storage[PROPOSAL_LIST_OFFSET + n] = proposal n
 
-# per account
-
+# per account:
 # contract.storage[ACCOUNT_MAP_OFFSET + account] = balance
 # contract.storage[ACCOUNT_MAP_OFFSET + account+1] = timestamp_last_transaction
 # contract.storage[ACCOUNT_MAP_OFFSET + account+2] = tax_credits
 
-# per proposal
-
-# contract.storage[PROPOSAL_MAP_OFFSET] = recipient
-# contract.storage[PROPOSAL_MAP_OFFSET+1] = amount
-# contract.storage[PROPOSAL_MAP_OFFSET+2] = total vote credits
-#
-# TODO should have expiration timestamp?, after which the tax_credits are refunded
-# TODO multiple proposals can take more credits that available in the Commons
-# TODO how to handle lost accounts, no longer possible to get 2/3 majority
+# per proposal:
+# contract.storage[PROPOSAL_MAP_OFFSET + proposal_id] = recipient
+# contract.storage[PROPOSAL_MAP_OFFSET + proposal_id+1] = amount
+# contract.storage[PROPOSAL_MAP_OFFSET + proposal_id+2] = total vote credits
 
 code:
     if msg.data[0] == "suicide" and msg.sender == contract.storage[ADMIN]:
@@ -157,7 +159,6 @@ code:
 
         return(proposal_id)
 
-
     elif msg.data[0] == "tick":
         nr_accounts = contract.storage[ACCOUNT_LIST_OFFSET - 1]
         account_idx = 0
@@ -184,6 +185,3 @@ code:
 
     else:
         return([0, "unknown command"], 2)
-
-
-
