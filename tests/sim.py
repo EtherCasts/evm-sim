@@ -11,7 +11,7 @@ from utils import encode_datalist, decode_datalist
 
 def compile_serpent(filename):
     try:
-        output = subprocess.check_output(["serpent", "compile", filename], stderr=subprocess.STDOUT)
+        output = subprocess.check_output(["sc", "compile", filename], stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         raise CompilationException(e.output)
 

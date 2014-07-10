@@ -22,11 +22,11 @@ Install the required Python libraries with `pip`, it is suggested to do this wit
 
 ` pip install -r requirements.txt`
 
-To use Serpent, the `serpent` compiler binary needs to be installed and available on the PATH; install it from https://github.com/ethereum/serpent/
+To use Serpent, the `sc` compiler binary needs to be installed and available on the PATH; install it from https://github.com/ethereum/langs/
 
 To use LLL, the `lllc` compiler binary needs to be installed and available on the PATH; install it from https://github.com/ethereum/cpp-ethereum/
 
-To use Mutan, the `mutan` compiler binary needs to be installed and available on the PATH; install it from https://github.com/obscuren/mutan
+To use Mutan, the `mutan` compiler binary needs to be installed and available on the PATH; install it from https://github.com/obscuren/mutan/
 
 ## Usage
 
