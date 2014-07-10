@@ -8,34 +8,22 @@ from utils import encode_datalist, decode_datalist
 
 # processblock.debug = 1
 
+def compile_cli(cmd, args, filename):
+    try:
+        output = subprocess.check_output([cmd] + args + [filename], stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        raise CompilationException(e.output)
+
+    return output.strip().decode('hex')
 
 def compile_serpent(filename):
-    try:
-        output = subprocess.check_output(["sc", "compile", filename], stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        raise CompilationException(e.output)
-
-    return output.strip().decode('hex')
+    return compile_cli("sc", ["compile"], filename)
 
 def compile_lll(filename):
-    try:
-        output = subprocess.check_output(["lllc", filename], stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        raise CompilationException(e.output)
-
-    return output.strip().decode('hex')
+    return compile_cli("lllc", [], filename)
 
 def compile_mutan(filename):
-    try:
-        output = subprocess.check_output(["mutan", filename], stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        raise CompilationException(e.output)
-
-    match = re.search("hex: 0x([0-9a-f]+)", output)
-    if not match:
-        raise CompilationException(output)
-
-    return match.group(1).decode('hex')
+    return compile_cli("mutan", [], filename)
 
 
 class CompilationException(Exception):
