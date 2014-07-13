@@ -1,3 +1,4 @@
+ethereum-serpent==1.5
 -e git://github.com/ethereum/pyethereum.git#egg=pyethereum
 flake8==2.1.0
 pytest==2.5.2
