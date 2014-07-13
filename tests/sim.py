@@ -3,9 +3,7 @@ import re
 import subprocess
 
 from pyethereum import transactions, blocks, processblock, utils
-import serpent
-
-from utils import encode_datalist, decode_datalist
+from serpent import compile, encode_datalist, decode_datalist
 
 # processblock.debug = 1
 
@@ -20,7 +18,7 @@ def compile_cli(cmd, args, filename):
 def compile_serpent(filename):
     # XXX old way to execute: return compile_cli("sc", ["compile"], filename)
     with open(filename) as f:
-        return serpent.compile(f.read())
+        return compile(f.read())
 
 def compile_lll(filename):
     return compile_cli("lllc", [], filename)
