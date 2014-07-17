@@ -1,11 +1,11 @@
 from collections import Counter
-import re
 import subprocess
 
 from pyethereum import transactions, blocks, processblock, utils
-from serpent import compile, encode_datalist, decode_datalist
+from serpent import encode_datalist, decode_datalist
 
 # processblock.debug = 1
+
 
 def compile_cli(cmd, args, filename):
     try:
@@ -15,13 +15,16 @@ def compile_cli(cmd, args, filename):
 
     return output.strip().decode('hex')
 
+
 def compile_serpent(filename):
-    # XXX old way to execute: return compile_cli("sc", ["compile"], filename)
-    with open(filename) as f:
-        return compile(f.read())
+    # with open(filename) as f:
+    #     return compile(f.read())
+    return compile_cli("serpent", ["compile"], filename)
+
 
 def compile_lll(filename):
     return compile_cli("lllc", [], filename)
+
 
 def compile_mutan(filename):
     return compile_cli("mutan", [], filename)

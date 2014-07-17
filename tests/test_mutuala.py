@@ -1,8 +1,6 @@
 from sim import Key, Simulator, compile_serpent
 from pyethereum.utils import coerce_to_bytes, coerce_addr_to_hex, sha3, big_endian_to_int, zpad
 
-import pytest
-
 
 class TestMutuala(object):
 
@@ -203,7 +201,6 @@ class TestMutuala(object):
         assert self.get_proposal_votes("grant to charlie") == 0
 
         assert self.get_proposal_list() == [coerce_addr_to_hex(proposal_id_bob), coerce_addr_to_hex(proposal_id_charlie)]
-
 
     def test_alice_propose_grant_to_nonexisting_account(self):
         ans = self.sim.tx(self.ALICE, self.contract, 0, ["pay", self.BOB.address, 1000])
