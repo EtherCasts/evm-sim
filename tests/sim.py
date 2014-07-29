@@ -4,8 +4,6 @@ import subprocess
 from pyethereum import transactions, blocks, processblock, utils
 from serpent import encode_datalist, decode_datalist
 
-# processblock.debug = 1
-
 
 def compile_cli(cmd, args, filename):
     try:

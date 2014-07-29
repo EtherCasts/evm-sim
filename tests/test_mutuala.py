@@ -1,6 +1,8 @@
 from sim import Key, Simulator, compile_serpent
 from pyethereum.utils import coerce_to_bytes, coerce_addr_to_hex, sha3, big_endian_to_int, zpad
 
+import logging
+
 
 class TestMutuala(object):
 
@@ -10,6 +12,7 @@ class TestMutuala(object):
 
     @classmethod
     def setup_class(cls):
+        logging.disable(logging.INFO)  # disable overzealous DEBUG logging of pyethereum.processblock
         cls.code = compile_serpent('examples/mutuala.se')
         cls.sim = Simulator({cls.ALICE.address: 10**18,
                              cls.BOB.address: 10**18})
@@ -239,6 +242,7 @@ class TestMutuala(object):
 
         # Vote on own proposal, with 1/3th of total credits
         ans = self.sim.tx(self.ALICE, self.contract, 0, ["vote", "grant to bob", 1368925406])
+        assert coerce_to_bytes(ans[1]) == "not enough tax credits"
         assert ans == [proposal_id_bob]
 
         assert self.get_account_tax_credits(self.ALICE.address) == 2737850814
