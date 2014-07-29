@@ -245,7 +245,6 @@ class TestMutuala(object):
             assert result(ans)
         assert e.value.message == "sender has no tax credits"
 
-    @pytest.mark.xfail
     def test_alice_propose_grant_to_bob_and_votes(self):
         ans = self.sim.tx(self.ALICE, self.contract, 0, ["pay", self.BOB.address, 1000])
         assert result(ans) == []

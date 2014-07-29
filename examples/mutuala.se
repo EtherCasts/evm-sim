@@ -132,7 +132,7 @@ code:
         proposal_id = sha3(msg.data[1])
         value = msg.data[2]
         # check if sender has an account and has tax credits
-        if value < contract.storage[ACCOUNT_MAP_OFFSET + from + 2]:
+        if not contract.storage[ACCOUNT_MAP_OFFSET + from + 2]:
             return([1, "not enough tax credits"], 2)
 
         # check if proposal exist
@@ -158,7 +158,7 @@ code:
             contract.storage[PROPOSAL_MAP_OFFSET + proposal_id] = 0
             contract.storage[PROPOSAL_MAP_OFFSET + proposal_id + 1] = 0
             contract.storage[PROPOSAL_MAP_OFFSET + proposal_id + 2] = 0
-            return(0)
+            return([0, 1], 2)
 
         return([0, proposal_id], 2)
 
